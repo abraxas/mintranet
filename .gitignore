@@ -1,0 +1,9 @@
+data/
+.venv/
+__pycache__/
+*.pyc
+.env
+*.sqlite
+*.p12
+recovery-kit.zip
+.testdata/
