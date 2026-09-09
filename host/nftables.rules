@@ -1,0 +1,36 @@
+#!/usr/sbin/nft -f
+# Default-deny for Mintranet paths. The Owner NIC may still use the public Internet.
+# Temporary egress is a timed set swap performed by mintranet-host-agent.
+
+flush ruleset
+
+table inet mintranet {
+  set egress_on {
+    type ipv4_addr
+    flags timeout
+  }
+
+  chain input {
+    type filter hook input priority 0; policy drop;
+    ct state established,related accept
+    iif lo accept
+    iifname "wg0" tcp dport { 80, 443 } accept
+    iifname "wg0" udp dport { 53, 123, 51820 } accept
+    iifname "wg0" tcp dport { 53, 6697, 8097 } accept
+    udp dport 51820 accept
+  }
+
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    iifname "wg0" oifname "wg0" accept
+  }
+
+  chain output {
+    type filter hook output priority 0; policy drop;
+    oif lo accept
+    ct state established,related accept
+    oifname "wg0" accept
+    udp dport 123 accept
+    ip daddr @egress_on accept
+  }
+}
