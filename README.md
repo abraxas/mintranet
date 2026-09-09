@@ -1,14 +1,10 @@
-<p align="center">
-  <img src="docs/banner.svg" alt="Abraxas Labs" width="100%">
-</p>
+# Mintranet
 
 <p align="center">
   <a href="https://x.com/abraxas_null">@abraxas_null</a>
   ·
   <a href="https://abraxaslabs.tech/">abraxaslabs.tech</a>
 </p>
-
-# Mintranet
 
 Invite-only island intranet. Friends join one Owner house over WireGuard. House services have no standing path to the public Internet.
 
