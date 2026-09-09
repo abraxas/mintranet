@@ -1,0 +1,165 @@
+# One Compose file. Default profile is the Owner house core.
+# Opt-in: --profile git --profile recursor --profile ca-acme --profile dhcp
+#
+# Production images must be digest-pinned (see scripts/pin-images.sh).
+# :latest is rejected by the host agent.
+
+name: mintranet
+
+networks:
+  island:
+    driver: bridge
+    ipam:
+      config:
+        # Container fabric only. The Member overlay remains 10.77.0.0/24 on wg0.
+        - subnet: 172.30.77.0/24
+
+volumes:
+  island-data:
+  forgejo-data:
+
+services:
+  api:
+    build:
+      context: ./api
+    image: mintranet/api:0.1.0
+    restart: unless-stopped
+    environment:
+      MINTRANET_DATA_DIR: /data
+      MINTRANET_ALLOW_DEV_AUTH: ${MINTRANET_ALLOW_DEV_AUTH:-false}
+    volumes:
+      - island-data:/data
+    networks:
+      island:
+        ipv4_address: 10.77.0.10
+    expose:
+      - "8081"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  gui:
+    build:
+      context: ./gui
+    image: mintranet/gui:0.1.0
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks:
+      island:
+        ipv4_address: 10.77.0.11
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - gui
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - island-data:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      island:
+        ipv4_address: 10.77.0.12
+
+  coredns:
+    image: coredns/coredns:1.11.3
+    restart: unless-stopped
+    command: ["-conf", "/data/published/Corefile"]
+    volumes:
+      - island-data:/data:ro
+    networks:
+      island:
+        ipv4_address: 10.77.0.13
+    expose:
+      - "53/udp"
+      - "53/tcp"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+
+  origin:
+    image: nginx:1.26.2-alpine
+    restart: unless-stopped
+    volumes:
+      - island-data:/data:ro
+      - ./origin/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      island:
+        ipv4_address: 10.77.0.14
+    expose:
+      - "80"
+
+  ergo:
+    image: ghcr.io/ergochat/ergo:v2.14.0
+    restart: unless-stopped
+    volumes:
+      - ./ergo/ircd.yaml:/ircd.yaml:ro
+      - island-data:/data:ro
+    networks:
+      island:
+        ipv4_address: 10.77.0.15
+    expose:
+      - "6667"
+      - "6697"
+
+  unbound:
+    profiles: ["recursor"]
+    image: mvance/unbound:1.20.0
+    restart: unless-stopped
+    volumes:
+      - ./unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+    networks:
+      island:
+        ipv4_address: 10.77.0.16
+    expose:
+      - "53/udp"
+      - "53/tcp"
+
+  forgejo:
+    profiles: ["git"]
+    image: codeberg.org/forgejo/forgejo:7.0.12
+    restart: unless-stopped
+    environment:
+      FORGEJO__server__DOMAIN: git.house.min
+      FORGEJO__server__ROOT_URL: https://git.house.min/
+      FORGEJO__server__HTTP_PORT: 3000
+      FORGEJO__service__DISABLE_REGISTRATION: "true"
+    volumes:
+      - forgejo-data:/data
+    networks:
+      island:
+        ipv4_address: 10.77.0.17
+    expose:
+      - "3000"
+
+  step-ca:
+    profiles: ["ca-acme"]
+    image: smallstep/step-ca:0.27.5
+    restart: unless-stopped
+    volumes:
+      - island-data:/home/step
+    networks:
+      island:
+        ipv4_address: 10.77.0.18
+    expose:
+      - "9000"
+
+  dnsmasq:
+    profiles: ["dhcp"]
+    image: alpine:3.20
+    command: ["dnsmasq", "-k", "-C", "/etc/dnsmasq.conf"]
+    cap_add:
+      - NET_ADMIN
+    network_mode: host
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    restart: unless-stopped
