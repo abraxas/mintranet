@@ -1,3 +1,5 @@
+![Abraxas Labs](docs/banner.png)
+
 # Mintranet
 
 Invite-only island intranet. Friends join one Owner house over WireGuard. House services have no standing path to the public Internet.
