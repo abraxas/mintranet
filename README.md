@@ -1,4 +1,12 @@
-![Abraxas Labs](docs/banner.png)
+<p align="center">
+  <img src="docs/banner.svg" alt="Abraxas Labs" width="100%">
+</p>
+
+<p align="center">
+  <a href="https://x.com/abraxas_null">@abraxas_null</a>
+  ·
+  <a href="https://abraxaslabs.tech/">abraxaslabs.tech</a>
+</p>
 
 # Mintranet
 
