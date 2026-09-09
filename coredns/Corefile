@@ -1,0 +1,12 @@
+min:53 {
+  bind 0.0.0.0
+  errors
+  file /data/published/min.zone min {
+    reload 10s
+  }
+}
+.:53 {
+  bind 0.0.0.0
+  errors
+  forward . 10.77.0.1
+}

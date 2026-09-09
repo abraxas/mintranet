@@ -1,0 +1,45 @@
+network:
+  name: Mintranet
+  status:
+    default: "#house"
+
+server:
+  name: irc.house.min
+  listeners:
+    ":6667":
+    ":6697":
+      tls:
+        cert: /data/published/house.crt
+        key: /data/published/house.key
+  max-sendq: 16k
+  enforce-utf8: true
+
+datastore:
+  path: /tmp/ergo.db
+
+accounts:
+  authentication-enabled: false
+  registration:
+    enabled: false
+  require-sasl:
+    enabled: false
+
+channels:
+  default-modes: +nt
+  registration:
+    enabled: false
+
+history:
+  enabled: false
+  persistent:
+    enabled: false
+
+limits:
+  nicklen: 24
+  identlen: 20
+  channellen: 32
+
+logging:
+  - method: stderr
+    type: "error info"
+    level: info

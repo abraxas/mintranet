@@ -1,0 +1,33 @@
+{
+  auto_https off
+  admin off
+}
+
+:80 {
+  @api path /v1/*
+  handle @api {
+    reverse_proxy api:8081
+  }
+  handle {
+    reverse_proxy gui:80
+  }
+}
+
+:443 {
+  tls /data/published/house.crt /data/published/house.key
+  @api host api.house.min
+  handle @api {
+    reverse_proxy api:8081
+  }
+  @irc host irc.house.min
+  handle @irc {
+    reverse_proxy ergo:8097
+  }
+  @git host git.house.min
+  handle @git {
+    reverse_proxy forgejo:3000
+  }
+  handle {
+    reverse_proxy gui:80
+  }
+}

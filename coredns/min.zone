@@ -1,0 +1,6 @@
+$ORIGIN min.
+$TTL 30
+@ IN SOA ns.house.min. owner.house.min. ( 1 60 60 86400 30 )
+@ IN NS ns.house.min.
+house.min. IN A 10.77.0.1
+ns.house.min. IN A 10.77.0.1
